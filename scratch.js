@@ -730,4 +730,5 @@ function sortTableTest(n) {
             }
         }
     }
+}
 
