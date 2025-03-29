@@ -178,29 +178,6 @@ color: white;
 }
 </style>`
 
-
-cssClassesSophie = `
-<style>
-.res{
-padding: 1px 1px 1px 18px;
-}
-.trclass:hover { background: #40D0E0 !important; }
-.trclass:hover td { background: transparent; }
-</style>`;
-$("#contentContainer").eq(0).prepend(cssClassesSophie);
-$("#mobileHeader").eq(0).prepend(cssClassesSophie);
-$("#building_wrapper").prepend(`<table><tr>
-<th id="currentSelection">No village chosen</th>
-<th>Res:</th>
-<td class="res"><span class="icon header wood"></span><span id="sourceWood">0</span></td>
-<td class="res"><span class="icon header stone"></span><span id="sourceStone">0</span></td>
-<td class="res"><span class="icon header iron"></span><span id="sourceIron">0</span></td>
-<th>Merchants:</th>
-<td class="res"><span id="sourceMerchants">0</span></td>
-<th><input type="button" class="btn evt-confirm-btn btn-confirm-yes" id="showSourceSelect" onclick="showSourceSelect()" value="Change source"></th>
-</tr></table>
-`)
-
 $("#contentContainer").eq(0).prepend(cssClassesSophie);
 $("#mobileHeader").eq(0).prepend(cssClassesSophie);
 
@@ -548,62 +525,57 @@ function checkDistance(x1, y1, x2, y2) {
 }
 
 function askCoordinate() {
-resource = {};
-    sources = [];
-    $.get("/game.php?&screen=overview_villages&mode=prod&group=0&page=-1&", function (resourcePage) {
-        // get X and Y of each village, ID, resources and merchants, maybe farm used? ... then add distance from current village and at the end, sort array according
-        rowsResPage = $(resourcePage).find("#production_table tr").not(":first");
-        $.each(rowsResPage, function (index) {
-            tempX = rowsResPage.eq(index).find("span.quickedit-vn").text().trim().match(/(\d+)\|(\d+)/)[1];
-            tempY = rowsResPage.eq(index).find("span.quickedit-vn").text().trim().match(/(\d+)\|(\d+)/)[2];
-            tempDistance = checkDistance(tempX, tempY, game_data.village.x, game_data.village.y);
-            tempResourcesHTML = rowsResPage[index].children[3].innerHTML;
-            tempWood = $(rowsResPage[index].children[3]).find(".wood").text().replace(".", "");
-            tempStone = $(rowsResPage[index].children[3]).find(".stone").text().replace(".", "");
-            tempIron = $(rowsResPage[index].children[3]).find(".iron").text().replace(".", "");
-            tempVillageID = $(rowsResPage).eq(index).find('span[data-id]').attr("data-id");
-            tempVillageName = $(rowsResPage).eq(index).find('.quickedit-label').text().trim()
-            tempMerchants =rowsResPage[index].children[5].innerText;
-            if (tempVillageID != game_data.village.id) {
-                //store data to be used later
-                sources.push({ "name": tempVillageName, "id": tempVillageID, "resources": tempResourcesHTML, "x": tempX, "y": tempY, "distance": tempDistance, "wood": tempWood, "stone": tempStone, "iron": tempIron,"merchants":tempMerchants })
-            }
-        })
-        sources.sort(function (left, right) { return left.distance - right.distance; })
-    })
-        .done(function () {
-            //make a way to select which village we want to use.
-            htmlSelection = `<div style='width:700px;'><h1>Select village where res will be pulled from</h1><br><span>Script made by Sophie "Shinko to Kuma"</span><br><table class="vis" style='width:700px;'>
-        <tr>
-            <th>Village name</th>
-            <th>Resources</th>
-            <th>Distance</th>
-            <th>Merchants</th>
-        </tr>`
-
-
-            $.each(sources, function (ind) {
-                htmlSelection += `
-            <tr class="trclass" style="cursor: pointer" onclick="selectVillage('${sources[ind].x}|${sources[ind].y}')">
-                <td>${sources[ind].name}</td>
-                <td>${sources[ind].resources}</td>
-                <td>${sources[ind].distance}</td>
-                <td>${sources[ind].merchants}</td>
-            </tr>
-            `
-            })
-            htmlSelection += "</table></div>"
-
-            Dialog.show("Content", htmlSelection);
-            //potentionally make a way to check if a village we are using to request from is starting to run low on resources, and maybe even select another village when there aren't enough available
-        });
-}
-
-function selectVillage(coord) {
-        coordinate = coord.value.match(/\d+\|\d+/)[0];
+    //ask for coordinate
+    var content = `<div style=max-width:1000px;>
+    <h2 class="popup_box_header">
+       <center><u>
+          <font color="darkgreen">${langShinko[0]}</font>
+          </u>
+       </center>
+    </h2>
+    <hr>
+    <p>
+    <center>
+       <font color=maroon><b>${langShinko[1]}</b>
+       </font>
+    </center>
+    </p>
+    <center> <table><tr><td><center>
+    <input type="text" ID="coordinateTargetFirstTime" name="coordinateTargetFirstTime" size="20" margin="5" align=left></center></td></tr>
+       <tr></tr>
+       <tr><td><center><input type="button"
+          class="btn evt-cancel-btn btn-confirm-yes" id="saveCoord"
+          value="${langShinko[2]}">&emsp;</center></td></tr>
+          <tr></tr>
+          </table>
+    </center>
+    <br>
+    <hr>
+    <center><img id="sophieImg" class="tooltip-delayed"
+       title="<font color=darkgreen>Sophie -Shinko to Kuma-</font>"
+       src="https://dl.dropboxusercontent.com/s/bxoyga8wa6yuuz4/sophie2.gif"
+       style="cursor:help; position: relative"></center>
+    <br>
+    <center>
+       <p>${langShinko[3]}: <a
+          href="https://shinko-to-kuma.my-free.website/"
+          title="Sophie profile" target="_blank">Sophie "Shinko
+          to Kuma"</a>
+       </p>
+    </center>
+ </div>`;
+    Dialog.show('Supportfilter', content);
+    if (game_data.locale == "ar_AE") {
+        $("#sophieImg").attr("src", "https://media2.giphy.com/media/qYr8p3Dzbet5S/giphy.gif");
+    }
+    $("#saveCoord").click(function () {
+        coordinate = $("#coordinateTargetFirstTime")[0].value.match(/\d+\|\d+/)[0];
         sessionStorage.setItem("coordinate", coordinate);
+        var close_this = document.getElementsByClassName(
+            'popup_box_close');
+        close_this[0].click();
         targetID = coordToId(coordinate);
-    };
+    });
 }
 
 
