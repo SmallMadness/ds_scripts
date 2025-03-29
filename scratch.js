@@ -615,6 +615,7 @@ function showSourceSelect() {
         $.each(rowsResPage, function (index) {
             tempX = rowsResPage.eq(index).find("span.quickedit-vn").text().trim().match(/(\d+)\|(\d+)/)[1];
             tempY = rowsResPage.eq(index).find("span.quickedit-vn").text().trim().match(/(\d+)\|(\d+)/)[2];
+            tempCoord = tempX + "|" + tempY; // Koordinaten zusammensetzen
             tempDistance = checkDistance(tempX, tempY, game_data.village.x, game_data.village.y);
             tempResourcesHTML = rowsResPage[index].children[3].innerHTML;
             tempWood = $(rowsResPage[index].children[3]).find(".wood").text().replace(".", "");
@@ -623,10 +624,12 @@ function showSourceSelect() {
             tempVillageID = $(rowsResPage).eq(index).find('span[data-id]').attr("data-id");
             tempVillageName = $(rowsResPage).eq(index).find('.quickedit-label').text().trim()
             tempMerchants = rowsResPage[index].children[5].innerText;
+
             if (tempVillageID != game_data.village.id) {
                 sources.push({
                     "name": tempVillageName,
                     "id": tempVillageID,
+                    "coord": tempCoord, // Koordinaten speichern
                     "resources": tempResourcesHTML,
                     "x": tempX,
                     "y": tempY,
@@ -642,7 +645,7 @@ function showSourceSelect() {
     })
     .done(function () {
         htmlSelection = `<div style='width:700px;'>
-            <h1>Quell-Dorf auswählen</h1>
+            <h1>Zieldorf auswählen</h1>
             <br>
             <span>Script made by Sophie "Shinko to Kuma"</span>
             <br>
@@ -656,7 +659,7 @@ function showSourceSelect() {
 
         $.each(sources, function (ind) {
             htmlSelection += `
-                <tr class="trclass" style="cursor: pointer" onclick="storeSourceID(${sources[ind].id},'${sources[ind].name}',${sources[ind].wood},${sources[ind].stone},${sources[ind].iron},${sources[ind].merchants.match(/(\d+)\//)[1]})">
+                <tr class="trclass" style="cursor: pointer" onclick="selectTargetVillage('${sources[ind].coord}')">
                     <td>${sources[ind].name}</td>
                     <td>${sources[ind].resources}</td>
                     <td>${sources[ind].distance}</td>
@@ -665,8 +668,15 @@ function showSourceSelect() {
         })
         htmlSelection += "</table></div>"
 
-        Dialog.show("Quell-Dorf auswählen", htmlSelection);
+        Dialog.show("Zieldorf auswählen", htmlSelection);
     });
+}
+
+// 2. Neue Funktion hinzufügen:
+function selectTargetVillage(coordinate) {
+    Dialog.close();
+    sessionStorage.setItem("coordinate", coordinate);
+    coordToId(coordinate); // Direkter Aufruf mit den Koordinaten
 }
 
 // Diese Funktion aus dem ersten Skript übernehmen
