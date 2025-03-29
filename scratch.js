@@ -601,6 +601,7 @@ function askCoordinate() {
 }
 
 function selectVillage(coord) {
+    console.log(coord);
     coordinate = coord;
     sessionStorage.setItem("coordinate", coordinate);
     Dialog.close();
