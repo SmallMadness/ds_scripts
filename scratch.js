@@ -603,7 +603,6 @@ function selectVillage(coord) {
         coordinate = coord.value.match(/\d+\|\d+/)[0];
         sessionStorage.setItem("coordinate", coordinate);
         targetID = coordToId(coordinate);
-    };
 }
 
 
