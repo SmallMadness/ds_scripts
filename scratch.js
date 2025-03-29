@@ -178,29 +178,6 @@ color: white;
 }
 </style>`
 
-
-cssClassesSophie = `
-<style>
-.res{
-padding: 1px 1px 1px 18px;
-}
-.trclass:hover { background: #40D0E0 !important; }
-.trclass:hover td { background: transparent; }
-</style>`;
-$("#contentContainer").eq(0).prepend(cssClassesSophie);
-$("#mobileHeader").eq(0).prepend(cssClassesSophie);
-$("#building_wrapper").prepend(`<table><tr>
-<th id="currentSelection">No village chosen</th>
-<th>Res:</th>
-<td class="res"><span class="icon header wood"></span><span id="sourceWood">0</span></td>
-<td class="res"><span class="icon header stone"></span><span id="sourceStone">0</span></td>
-<td class="res"><span class="icon header iron"></span><span id="sourceIron">0</span></td>
-<th>Merchants:</th>
-<td class="res"><span id="sourceMerchants">0</span></td>
-<th><input type="button" class="btn evt-confirm-btn btn-confirm-yes" id="showSourceSelect" onclick="showSourceSelect()" value="Change source"></th>
-</tr></table>
-`)
-
 $("#contentContainer").eq(0).prepend(cssClassesSophie);
 $("#mobileHeader").eq(0).prepend(cssClassesSophie);
 
@@ -548,7 +525,8 @@ function checkDistance(x1, y1, x2, y2) {
 }
 
 function askCoordinate() {
-resource = {};
+    function showSourceSelect() {
+    resource = {};
     sources = [];
     $.get("/game.php?&screen=overview_villages&mode=prod&group=0&page=-1&", function (resourcePage) {
         // get X and Y of each village, ID, resources and merchants, maybe farm used? ... then add distance from current village and at the end, sort array according
@@ -599,10 +577,12 @@ resource = {};
         });
 }
 
+
 function selectVillage(coord) {
-        coordinate = coord.value.match(/\d+\|\d+/)[0];
-        sessionStorage.setItem("coordinate", coordinate);
-        targetID = coordToId(coordinate);
+    console.log(coord)
+    coordinate = coord
+    sessionStorage.setItem("coordinate", coordinate);
+    targetID = coordToId(coordinate);
 }
 
 
