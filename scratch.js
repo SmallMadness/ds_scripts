@@ -533,68 +533,80 @@ function checkDistance(x1, y1, x2, y2) {
 function askCoordinate() {
     resource = {};
     sources = [];
-    $.get("/game.php?&screen=overview_villages&mode=prod&group=0&page=-1&", function (resourcePage) {
-        // get X and Y of each village, ID, resources and merchants, maybe farm used? ... then add distance from current village and at the end, sort array according
+    $.get("/game.php?&screen=overview_villages&mode=prod&group=0&page=-1&", function(resourcePage) {
         rowsResPage = $(resourcePage).find("#production_table tr").not(":first");
-        $.each(rowsResPage, function (index) {
-            tempX = rowsResPage.eq(index).find("span.quickedit-vn").text().trim().match(/(\d+)\|(\d+)/)[1];
-            tempY = rowsResPage.eq(index).find("span.quickedit-vn").text().trim().match(/(\d+)\|(\d+)/)[2];
-            tempDistance = checkDistance(tempX, tempY, game_data.village.x, game_data.village.y);
-            tempResourcesHTML = rowsResPage[index].children[3].innerHTML;
-            tempWood = $(rowsResPage[index].children[3]).find(".wood").text().replace(".", "");
-            tempStone = $(rowsResPage[index].children[3]).find(".stone").text().replace(".", "");
-            tempIron = $(rowsResPage[index].children[3]).find(".iron").text().replace(".", "");
-            tempVillageID = $(rowsResPage).eq(index).find('span[data-id]').attr("data-id");
-            tempVillageName = $(rowsResPage).eq(index).find('.quickedit-label').text().trim()
-            tempMerchants =rowsResPage[index].children[5].innerText;
+        $.each(rowsResPage, function(index) {
+            var coordMatch = rowsResPage.eq(index).find("span.quickedit-vn").text().trim().match(/(\d+)\|(\d+)/);
+            if (!coordMatch) return;
+
+            var tempX = coordMatch[1];
+            var tempY = coordMatch[2];
+            var tempDistance = checkDistance(tempX, tempY, game_data.village.x, game_data.village.y);
+            var tempResourcesHTML = rowsResPage[index].children[3].innerHTML;
+            var tempWood = $(rowsResPage[index].children[3]).find(".wood").text().replace(/\.|,/g, '');
+            var tempStone = $(rowsResPage[index].children[3]).find(".stone").text().replace(/\.|,/g, '');
+            var tempIron = $(rowsResPage[index].children[3]).find(".iron").text().replace(/\.|,/g, '');
+            var tempVillageID = $(rowsResPage).eq(index).find('span[data-id]').attr("data-id");
+            var tempVillageName = $(rowsResPage).eq(index).find('.quickedit-label').text().trim();
+            var tempMerchants = rowsResPage[index].children[5].innerText;
+
             if (tempVillageID != game_data.village.id) {
-                //store data to be used later
-                sources.push({ "name": tempVillageName, "id": tempVillageID, "resources": tempResourcesHTML, "x": tempX, "y": tempY, "distance": tempDistance, "wood": tempWood, "stone": tempStone, "iron": tempIron,"merchants":tempMerchants })
+                sources.push({
+                    "name": tempVillageName,
+                    "id": tempVillageID,
+                    "resources": tempResourcesHTML,
+                    "x": tempX,
+                    "y": tempY,
+                    "distance": tempDistance,
+                    "wood": tempWood,
+                    "stone": tempStone,
+                    "iron": tempIron,
+                    "merchants": tempMerchants
+                });
             }
-        })
-        sources.sort(function (left, right) { return left.distance - right.distance; })
-    })
-        .done(function () {
-            //make a way to select which village we want to use.
-            htmlSelection = `<div style='width:700px;'><h1>Select village where res will be pulled from</h1><br><span>Script made by Sophie "Shinko to Kuma"</span><br><table class="vis" style='width:700px;'>
-        <tr>
-            <th>Village name</th>
-            <th>Resources</th>
-            <th>Distance</th>
-            <th>Merchants</th>
-        </tr>`
-
-
-            $.each(sources, function (ind) {
-                htmlSelection += `
-            <tr class="trclass" style="cursor: pointer" onclick="selectVillage('${sources[ind].x}|${sources[ind].y}')">
-                <td>${sources[ind].name}</td>
-                <td>${sources[ind].resources}</td>
-                <td>${sources[ind].distance}</td>
-                <td>${sources[ind].merchants}</td>
-            </tr>
-            `
-            })
-            htmlSelection += "</table></div>"
-
-            Dialog.show("Content", htmlSelection);
-            //potentionally make a way to check if a village we are using to request from is starting to run low on resources, and maybe even select another village when there aren't enough available
         });
-    Dialog.show('Supportfilter', content);
-    if (game_data.locale == "ar_AE") {
-        $("#sophieImg").attr("src", "https://media2.giphy.com/media/qYr8p3Dzbet5S/giphy.gif");
-    }
+        sources.sort(function(left, right) { return left.distance - right.distance; });
+    })
+    .done(function() {
+        var htmlSelection = `
+        <div style='width:700px;'>
+            <h1>Zieldorf auswählen</h1>
+            <span>Script made by Sophie "Shinko to Kuma"</span>
+            <table class="vis" style='width:700px;'>
+                <tr>
+                    <th>Dorfname</th>
+                    <th>Ressourcen</th>
+                    <th>Entfernung</th>
+                    <th>Händler</th>
+                </tr>`;
+
+        $.each(sources, function(ind) {
+            htmlSelection += `
+                <tr class="trclass" style="cursor: pointer"
+                    onclick="selectVillage('${sources[ind].x}|${sources[ind].y}')">
+                    <td>${sources[ind].name}</td>
+                    <td>${sources[ind].resources}</td>
+                    <td>${sources[ind].distance}</td>
+                    <td>${sources[ind].merchants}</td>
+                </tr>`;
+        });
+
+        htmlSelection += `</table></div>`;
+        Dialog.show("Zieldorf auswählen", htmlSelection);
+
+        if (game_data.locale == "ar_AE") {
+            $("#sophieImg").attr("src", "https://media2.giphy.com/media/qYr8p3Dzbet5S/giphy.gif");
+        }
+    });
 }
-
-
 
 function selectVillage(coord) {
     coordinate = coord;
     sessionStorage.setItem("coordinate", coordinate);
     Dialog.close();
-    targetID = coordToId(coordinate);
 
-    createList();
+    // Ziel-Dorf-ID ermitteln und dann createList aufrufen
+    coordToId(coordinate);
 }
 
 
