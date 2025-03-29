@@ -1,4 +1,10 @@
 javascript:
+var sourceID = 0;
+var sourceWood = 0;
+var sourceStone = 0;
+var sourceIron = 0;
+var sourceMerchants = 0;
+
 var warehouseCapacity = [];
 var allWoodTotals = [];
 var allClayTotals = [];
@@ -461,7 +467,7 @@ function createList() {
             <td width="50" style="text-align:center">${res.wood}<span class="icon header wood"> </span></td>
             <td width="50" style="text-align:center">${res.stone}<span class="icon header stone"> </span></td>
             <td width="50" style="text-align:center">${res.iron}<span class="icon header iron"> </span></td>
-            <td style="text-align:center"><input type="button" class="btn evt-confirm-btn btn-confirm-yes" id="sendResources" value="${langShinko[17]}" onclick=sendResource(${villagesData[i].id},${sendBack[0]},${res.wood},${res.stone},${res.iron},${i})></td>
+            <td style="text-align:center"><input type="button" class="btn evt-confirm-btn btn-confirm-yes" id="sendResources" value="${langShinko[17]}" onclick=sendResource(${sendBack[0]},${res.wood},${res.stone},${res.iron},${i})></td>
         </tr>`
         }
     }
@@ -476,35 +482,54 @@ function createList() {
     $(":button,#sendResources")[3].focus();
 }
 
-function sendResource(sourceID, targetID, woodAmount, stoneAmount, ironAmount, rowNr) {
-    $(':button[id^="sendResources"]').prop('disabled', true);
-    setTimeout(function () { $("#" + rowNr)[0].remove(); $(':button[id^="sendResources"]').prop('disabled', false); $(":button,#sendResources")[3].focus(); if($("#tableSend tr").length<=2)
-    {
-        alert("Finished sending!");
+function sendResource(targetID, woodAmount, stoneAmount, ironAmount, rowNr) {
+    // Sicherstellen dass ein Quell-Dorf ausgewählt wurde
+    if (!sourceID) {
+        UI.ErrorMessage("Bitte erst ein Quell-Dorf auswählen!");
+        return;
+    }
 
-        if($(".btn-pp").length>0)
-        {
-            $(".btn-pp").remove();
+    $(':button[id^="sendResources"]').prop('disabled', true);
+    setTimeout(function () {
+        $("#" + rowNr)[0].remove();
+        $(':button[id^="sendResources"]').prop('disabled', false);
+        $(":button,#sendResources")[3].focus();
+        if($("#tableSend tr").length<=2) {
+            alert("Finished sending!");
+            if($(".btn-pp").length>0) {
+                $(".btn-pp").remove();
+            }
+            throw Error("Done.");
         }
-        throw Error("Done.");
-    }}, 200);
-    var e = { "target_id": targetID, "wood": woodAmount, "stone": stoneAmount, "iron": ironAmount };
+    }, 200);
+
+    var e = {
+        "target_id": targetID,
+        "wood": woodAmount,
+        "stone": stoneAmount,
+        "iron": ironAmount
+    };
+
     TribalWars.post("market", {
-        ajaxaction: "map_send", village: sourceID
+        ajaxaction: "map_send",
+        village: sourceID // WICHTIG: Globale Variable verwenden
     }, e, function (e) {
-        Dialog.close(),
-            UI.SuccessMessage(e.message)
-        console.log(e.message)
+        Dialog.close();
+        UI.SuccessMessage(e.message);
+        console.log(e.message);
         totalWoodSent += woodAmount;
         totalStoneSent += stoneAmount;
         totalIronSent += ironAmount;
+
+        // Globale Ressourcen aktualisieren
+        sourceWood -= woodAmount;
+        sourceStone -= stoneAmount;
+        sourceIron -= ironAmount;
+
         $("#woodSent").eq(0).text(`${numberWithCommas(totalWoodSent)}`);
         $("#stoneSent").eq(0).text(`${numberWithCommas(totalStoneSent)}`);
         $("#ironSent").eq(0).text(`${numberWithCommas(totalIronSent)}`);
-       },
-        !1
-    );
-
+    }, !1);
 }
 
 function numberWithCommas(x) {
@@ -525,57 +550,135 @@ function checkDistance(x1, y1, x2, y2) {
 }
 
 function askCoordinate() {
-    //ask for coordinate
+    // Erst das normale Koordinaten-Popup anzeigen
     var content = `<div style=max-width:1000px;>
-    <h2 class="popup_box_header">
-       <center><u>
-          <font color="darkgreen">${langShinko[0]}</font>
-          </u>
-       </center>
-    </h2>
-    <hr>
-    <p>
-    <center>
-       <font color=maroon><b>${langShinko[1]}</b>
-       </font>
-    </center>
-    </p>
-    <center> <table><tr><td><center>
-    <input type="text" ID="coordinateTargetFirstTime" name="coordinateTargetFirstTime" size="20" margin="5" align=left></center></td></tr>
-       <tr></tr>
-       <tr><td><center><input type="button"
-          class="btn evt-cancel-btn btn-confirm-yes" id="saveCoord"
-          value="${langShinko[2]}">&emsp;</center></td></tr>
-          <tr></tr>
-          </table>
-    </center>
-    <br>
-    <hr>
-    <center><img id="sophieImg" class="tooltip-delayed"
-       title="<font color=darkgreen>Sophie -Shinko to Kuma-</font>"
-       src="https://dl.dropboxusercontent.com/s/bxoyga8wa6yuuz4/sophie2.gif"
-       style="cursor:help; position: relative"></center>
-    <br>
-    <center>
-       <p>${langShinko[3]}: <a
-          href="https://shinko-to-kuma.my-free.website/"
-          title="Sophie profile" target="_blank">Sophie "Shinko
-          to Kuma"</a>
-       </p>
-    </center>
- </div>`;
+        <h2 class="popup_box_header">
+           <center><u>
+              <font color="darkgreen">${langShinko[0]}</font>
+              </u>
+           </center>
+        </h2>
+        <hr>
+        <p>
+        <center>
+           <font color=maroon><b>${langShinko[1]}</b>
+           </font>
+        </center>
+        </p>
+        <center>
+            <table>
+                <tr>
+                    <td><center>
+                        <input type="text" ID="coordinateTargetFirstTime" name="coordinateTargetFirstTime" size="20" margin="5" align=left>
+                    </center></td>
+                </tr>
+                <tr>
+                    <td><center>
+                        <input type="button" class="btn evt-confirm-btn" id="selectSourceVillage" value="Quell-Dorf auswählen" onclick="showSourceSelect()">
+                    </center></td>
+                </tr>
+                <tr>
+                    <td><center>
+                        <input type="button" class="btn evt-cancel-btn btn-confirm-yes" id="saveCoord" value="${langShinko[2]}">
+                    </center></td>
+                </tr>
+            </table>
+        </center>
+        <br>
+        <hr>
+        <center>
+            <p>${langShinko[3]}: <a href="https://shinko-to-kuma.my-free.website/" title="Sophie profile" target="_blank">Sophie "Shinko to Kuma"</a></p>
+        </center>
+    </div>`;
+
     Dialog.show('Supportfilter', content);
+
     if (game_data.locale == "ar_AE") {
         $("#sophieImg").attr("src", "https://media2.giphy.com/media/qYr8p3Dzbet5S/giphy.gif");
     }
+
     $("#saveCoord").click(function () {
         coordinate = $("#coordinateTargetFirstTime")[0].value.match(/\d+\|\d+/)[0];
         sessionStorage.setItem("coordinate", coordinate);
-        var close_this = document.getElementsByClassName(
-            'popup_box_close');
+        var close_this = document.getElementsByClassName('popup_box_close');
         close_this[0].click();
         targetID = coordToId(coordinate);
     });
+}
+
+// Diese Funktion aus dem ersten Skript übernehmen
+function showSourceSelect() {
+    resource = {};
+    sources = [];
+    $.get("/game.php?&screen=overview_villages&mode=prod&group=0&page=-1&", function (resourcePage) {
+        rowsResPage = $(resourcePage).find("#production_table tr").not(":first");
+        $.each(rowsResPage, function (index) {
+            tempX = rowsResPage.eq(index).find("span.quickedit-vn").text().trim().match(/(\d+)\|(\d+)/)[1];
+            tempY = rowsResPage.eq(index).find("span.quickedit-vn").text().trim().match(/(\d+)\|(\d+)/)[2];
+            tempDistance = checkDistance(tempX, tempY, game_data.village.x, game_data.village.y);
+            tempResourcesHTML = rowsResPage[index].children[3].innerHTML;
+            tempWood = $(rowsResPage[index].children[3]).find(".wood").text().replace(".", "");
+            tempStone = $(rowsResPage[index].children[3]).find(".stone").text().replace(".", "");
+            tempIron = $(rowsResPage[index].children[3]).find(".iron").text().replace(".", "");
+            tempVillageID = $(rowsResPage).eq(index).find('span[data-id]').attr("data-id");
+            tempVillageName = $(rowsResPage).eq(index).find('.quickedit-label').text().trim()
+            tempMerchants = rowsResPage[index].children[5].innerText;
+            if (tempVillageID != game_data.village.id) {
+                sources.push({
+                    "name": tempVillageName,
+                    "id": tempVillageID,
+                    "resources": tempResourcesHTML,
+                    "x": tempX,
+                    "y": tempY,
+                    "distance": tempDistance,
+                    "wood": tempWood,
+                    "stone": tempStone,
+                    "iron": tempIron,
+                    "merchants": tempMerchants
+                })
+            }
+        })
+        sources.sort(function (left, right) { return left.distance - right.distance; })
+    })
+    .done(function () {
+        htmlSelection = `<div style='width:700px;'>
+            <h1>Quell-Dorf auswählen</h1>
+            <br>
+            <span>Script made by Sophie "Shinko to Kuma"</span>
+            <br>
+            <table class="vis" style='width:700px;'>
+                <tr>
+                    <th>Dorfname</th>
+                    <th>Ressourcen</th>
+                    <th>Entfernung</th>
+                    <th>Händler</th>
+                </tr>`;
+
+        $.each(sources, function (ind) {
+            htmlSelection += `
+                <tr class="trclass" style="cursor: pointer" onclick="storeSourceID(${sources[ind].id},'${sources[ind].name}',${sources[ind].wood},${sources[ind].stone},${sources[ind].iron},${sources[ind].merchants.match(/(\d+)\//)[1]})">
+                    <td>${sources[ind].name}</td>
+                    <td>${sources[ind].resources}</td>
+                    <td>${sources[ind].distance}</td>
+                    <td>${sources[ind].merchants}</td>
+                </tr>`
+        })
+        htmlSelection += "</table></div>"
+
+        Dialog.show("Quell-Dorf auswählen", htmlSelection);
+    });
+}
+
+// Diese Funktion aus dem ersten Skript übernehmen
+function storeSourceID(id, name, wood, stone, iron, merchants) {
+    resource = {};
+    sourceID = id;
+    sourceWood = wood;
+    sourceStone = stone;
+    sourceIron = iron;
+    sourceMerchants = merchants;
+    UI.SuccessMessage(`Verwende ${name} als Quell-Dorf.`);
+    Dialog.close();
 }
 
 
