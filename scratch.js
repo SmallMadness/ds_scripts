@@ -623,16 +623,42 @@ function askCoordinate() {
     });
 }
 
-function selectVillage(coord) {
-    console.log(coord);
-    coordinate = coord;
-    sessionStorage.setItem("coordinate", coordinate);
-    Dialog.close();
+function coordToId(coordinate) {
+    //get village data from the coordinate we gained from the user
+    if (game_data.player.sitter > 0) {
+        sitterID = `game.php?t=${game_data.player.id}&screen=api&ajax=target_selection&input=${coordinate}&type=coord`;
+    }
+    else {
+        sitterID = '/game.php?&screen=api&ajax=target_selection&input=' + coordinate + '&type=coord';
+    }
 
-    // Ziel-Dorf-ID ermitteln und dann createList aufrufen
-    coordToId(coordinate);
+    $.get(sitterID, function (json) {
+        var data = parseFloat(game_data.majorVersion) > 8.217 ? json : JSON.parse(json);
+        console.log(data);
+
+        if(data && data.villages && data.villages.length > 0) {
+            sendBack = [
+                data.villages[0].id,
+                data.villages[0].name,
+                data.villages[0].image,
+                data.villages[0].player_name,
+                data.villages[0].points,
+                data.villages[0].x,
+                data.villages[0].y
+            ];
+
+            // Update the current selection display
+            $("#currentSelection").text("Target: " + data.villages[0].name);
+
+            // Create the resource sending list
+            createList();
+        } else {
+            alert("Could not find village data for coordinate " + coordinate);
+        }
+    }).fail(function() {
+        alert("Failed to load village data from API");
+    });
 }
-
 
 
 
