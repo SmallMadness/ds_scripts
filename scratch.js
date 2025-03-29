@@ -184,6 +184,29 @@ color: white;
 }
 </style>`
 
+
+cssClassesSophie = `
+<style>
+.res{
+padding: 1px 1px 1px 18px;
+}
+.trclass:hover { background: #40D0E0 !important; }
+.trclass:hover td { background: transparent; }
+</style>`;
+$("#contentContainer").eq(0).prepend(cssClassesSophie);
+$("#mobileHeader").eq(0).prepend(cssClassesSophie);
+$("#building_wrapper").prepend(`<table><tr>
+<th id="currentSelection">No village chosen</th>
+<th>Res:</th>
+<td class="res"><span class="icon header wood"></span><span id="sourceWood">0</span></td>
+<td class="res"><span class="icon header stone"></span><span id="sourceStone">0</span></td>
+<td class="res"><span class="icon header iron"></span><span id="sourceIron">0</span></td>
+<th>Merchants:</th>
+<td class="res"><span id="sourceMerchants">0</span></td>
+<th><input type="button" class="btn evt-confirm-btn btn-confirm-yes" id="showSourceSelect" onclick="showSourceSelect()" value="Change source"></th>
+</tr></table>
+`)
+
 $("#contentContainer").eq(0).prepend(cssClassesSophie);
 $("#mobileHeader").eq(0).prepend(cssClassesSophie);
 
